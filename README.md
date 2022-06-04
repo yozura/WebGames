@@ -1,2 +1,5 @@
 # WebGames
-HTML 과 JavaScript를 이용한 간단한 웹게임입니다.
+__자작 웹 게임 모음__   
+
+> Programming Language : _JavaScript_  
+> Markup Language : _HTML5_

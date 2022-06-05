@@ -135,7 +135,9 @@ let isPause = false;
 let backImage;
 
 // Others
-const enemyX = [0, 100, 200, 300, 400];
+let difficulty = 1.0;
+let maxBulletCount = 14;
+let curBulletCount = 0;
 let score = 0;
 //#endregion
 
@@ -159,13 +161,13 @@ function start() {
         () => {
             if (!isPause) {
                 // 주기적으로 실행
-                ++score;
+                createEnemy();
                 progressAll();
-                drawAll();
                 collisionAll();
+                drawAll();
             }
         }
-        , 30
+        , 20
     );
 }
 //#endregion
@@ -189,43 +191,45 @@ function createPlayer() {
     });
 
     document.addEventListener("keydown", (e) => {
-        if (e.key === "x") {
+        if (e.key === "x" || e.key === "X") {
             createBullet();
-            console.log(bullets.length);
         }
     });
 }
 
 function createEnemy() {
+    if (enemys.length > 0) {
+        return;
+    }
+
     const enemyCount = Math.floor(Math.random() * 5) + 1;
+    const enemyX = [0, 100, 200, 300, 400];
     for (let i = 0; i < enemyCount; ++i) {
+        const randX = Math.floor(Math.random() * 5);
         const enemyScale = new Vector2D(100, 100);
-        const enemyPos = new Vector2D(enemyX[i], -50);
+        const enemyPos = new Vector2D(enemyX[randX], -50);
         const enemyHp = Math.floor(Math.random() * 5) + 1;
-        const enemy = new Enemy(enemyPos, enemyScale, enemyHp, 5);
+        const enemy = new Enemy(enemyPos, enemyScale, enemyHp, 5 * difficulty);
         enemys.push(enemy);
+        enemyX.splice(randX, 1);
     }
 }
 
 function createBullet() {
+    if (bullets.length >= maxBulletCount) {
+        return;
+    }
+
     const bulletScale = new Vector2D(50, 50);
     const bulletPos = new Vector2D(player.pos.x + bulletScale.x, player.pos.y - bulletScale.y / 2);
     const bullet = new Bullet(bulletPos, bulletScale, 10, 1);
     bullets.push(bullet);
 }
-
-function loopEnemy() {
-    // 시간이 지날 때마다 주기적으로 소환. 
-    const enemyCount = Math.floor(Math.random() * 5);
-    while (enemyCount--) {
-        const enemyIdx = Math.floor(Math.random() * 5);
-        enemys[enemyIdx].pos.y = 0;
-    }
-}
 //#endregion
 
 //#region Progress
 function progressAll() {
+    progressGame();
     progressObject();
 }
 
@@ -255,6 +259,10 @@ function progressObject() {
         isPause = true;
     }
 }
+
+function progressGame() {
+    // 난이도 조정
+}
 //#endregion
 
 //#region Collision
@@ -274,6 +282,7 @@ function collisionAll() {
                 && !bullets[j].isHit) {
                 enemys[i].takeDamage(bullets[j].damage);
                 bullets[j].isHit = true;
+                score += enemys[i].maxHp * difficulty;
             }
         }
     }
@@ -292,13 +301,12 @@ function isCollision(left, right) {
 
 //#region Draw
 function drawAll() {
-
     drawBackground();
     drawObject();
     drawUI();
 
     // Debug
-    drawGizmo();
+    // drawGizmo();
 }
 
 function drawBackground() {
@@ -329,6 +337,12 @@ function drawUI() {
     context.font = "25px Dotum";
     context.textAlign = "start";
     context.fillText(score, 5, 25);
+
+    // Draw Magazine
+    context.fillStyle = "#000000";
+    context.font = "25px Dotum";
+    context.textAlign = "end";
+    context.fillText((maxBulletCount - bullets.length), 500, 800);
 }
 
 function drawGizmo() {

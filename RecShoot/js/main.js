@@ -26,7 +26,6 @@ class Player extends Transform {
     }
 
     progress() {
-        this.damage = this.hp;
     }
 
     draw() {
@@ -44,6 +43,8 @@ class Player extends Transform {
         if (this.hp <= 0) {
             this.hp = 0;
             this.isDead = true;
+        } else {
+            this.damage = this.hp;
         }
     }
 
@@ -99,7 +100,7 @@ class Bullet extends Transform {
 }
 
 class Enemy extends Transform {
-    constructor(pos, scale, maxHp, speed) {
+    constructor(pos, scale, maxHp, speed, knockForce) {
         super(pos, scale);
         this.maxHp = maxHp;
         this.hp = maxHp;
@@ -107,12 +108,12 @@ class Enemy extends Transform {
         this.speed = speed;
         this.isDead = false;
         this.isExist = true;
+        this.knockForce = knockForce;
 
         this.itemType = itemType[pickRandomItem()];
     }
 
     progress() {
-        this.damage = this.hp;
         this.pos.y += this.speed;
         if (this.pos.y >= 800) {
             this.isExist = false;
@@ -134,20 +135,23 @@ class Enemy extends Transform {
         context.fillText(this.hp, this.pos.x + this.scale.x / 2, this.pos.y + this.scale.y / 2 + 8);
     }
 
-    takeDamage(damage) {
-        // TODO :: 넉백 효과 조금 넣기?
+    takeDamage(damage, isKnockBack) {
         this.hp -= damage;
-        this.damage = this.hp;
+        if (isKnockBack)
+            this.pos.y -= (this.speed * this.knockForce);
+
         if (this.hp <= 0) {
             this.hp = 0;
             this.isDead = true;
+        } else {
+            this.damage = this.hp;
         }
     }
 }
 
 class Boss extends Enemy {
-    constructor(pos, scale, maxHp, speed) {
-        super(pos, scale, maxHp, speed);
+    constructor(pos, scale, maxHp, speed, knockForce) {
+        super(pos, scale, maxHp, speed, knockForce);
     }
 }
 
@@ -158,6 +162,14 @@ class Item extends Transform {
         this.value = value;
         this.type = type;
         this.isExist = true;
+        this.limitTime = 10;
+
+        setTimeout(
+            () => {
+                this.isExist = false;
+            }
+            , this.limitTime * 1000
+        );
     }
 
     progress() {
@@ -185,6 +197,40 @@ class Item extends Transform {
         context.fillText(this.type, this.pos.x + this.scale.x / 2, this.pos.y + this.scale.y / 2 + 8);
     }
 }
+
+class Timer {
+    constructor() {
+        this.hour = 0;
+        this.min = 0;
+        this.sec = 0;
+    }
+
+    update() {
+        ++this.sec;
+        if (this.sec % 60 === 0) {
+            ++this.min;
+            this.sec = 0;
+            if (this.min % 60 === 0) {
+                ++this.hour;
+                this.min = 0;
+            }
+        }
+    }
+
+    toString() {
+        let str = "";
+        if (this.hour < 10) str = "0" + this.hour + ":";
+        else str += this.hour + ":";
+
+        if (this.min < 10) str += "0" + this.min + ":";
+        else str += this.min + ":";
+
+        if (this.sec < 10) str += "0" + this.sec;
+        else str += this.sec;
+
+        return str;
+    }
+}
 //#endregion
 
 //#region Variable
@@ -201,6 +247,7 @@ const bullets = [];
 const items = [];
 
 // UI
+let timer;
 let isPause = false;
 let backImage;
 
@@ -208,7 +255,7 @@ let backImage;
 let difficulty = 1.0;
 const maxBulletCount = 14;
 let curBulletCount = maxBulletCount;
-const itemProb = { "NONE": 0.8, "HEAL": 0.1, "DAMAGE": 0.05, "BOMB": 0.05 };
+const itemProb = { "NONE": 0.85, "HEAL": 0.08, "DAMAGE": 0.05, "BOMB": 0.02 };
 const itemType = ["NONE", "HEAL", "DAMAGE", "BOMB"];
 let isBomb = false;
 let isReload = false;
@@ -252,22 +299,34 @@ function start() {
             if (!isPause) {
                 // 주기적으로 실행
                 createEnemy();
-                progressAll();
                 collisionAll();
+                progressAll();
                 drawAll();
+            } else {
+                // 리트라이, 랭킹 등. 작업 처리
+
             }
         }
         , 17
     );
 
+    // Frame Update
     setInterval(
         () => {
-            // Frame Update
             fpsElem.innerHTML = "FPS " + fps;
             kecElem.innerHTML = "죽인 적 수 " + killedEnemyCount;
             kbcElem.innerHTML = "죽인 보스 수 " + killedBossCount;
         }
         , 200
+    )
+
+    // Time Update
+    timer = new Timer();
+    setInterval(
+        () => {
+            timer.update();
+        }
+        , 1000
     )
 }
 //#endregion
@@ -361,19 +420,19 @@ function createEnemy() {
     if (enemyCount == 1) {
         const bossScale = new Vector2D(500, 500);
         const bossPos = new Vector2D(0, -500);
-        const bossHp = Math.floor(Math.random() * 50 * difficulty) + 1;
-        const boss = new Boss(bossPos, bossScale, bossHp, 3 * difficulty);
+        const bossHp = Math.floor(Math.random() * 30 * difficulty) + 1;
+        const boss = new Boss(bossPos, bossScale, bossHp, 3 * difficulty, 3.0);
         bosses.push(boss);
         return;
     }
 
     const enemyX = [0, 100, 200, 300, 400];
     for (let i = 0; i < enemyCount; ++i) {
-        const randX = Math.floor(Math.random() * 5);
+        const randX = Math.floor(Math.random() * enemyX.length);
         const enemyScale = new Vector2D(100, 100);
-        const enemyPos = new Vector2D(enemyX[randX], -50);
-        const enemyHp = Math.floor(Math.random() * 5) + 1;
-        const enemy = new Enemy(enemyPos, enemyScale, enemyHp, 5 * difficulty);
+        const enemyPos = new Vector2D(enemyX[randX], -100);
+        const enemyHp = Math.floor(Math.random() * 5 * difficulty) + 1;
+        const enemy = new Enemy(enemyPos, enemyScale, enemyHp, 5 * difficulty, 1.5);
         enemys.push(enemy);
         enemyX.splice(randX, 1);
     }
@@ -396,9 +455,9 @@ function createBullet() {
 //#region Function
 function pickRandomItem() {
     let rand = Math.random();
-    if (rand < 0.05) return 3;
-    else if (rand < 0.1) return 2;
-    else if (rand < 0.2) return 1;
+    if (rand < itemProb['BOMB']) return 3;
+    else if (rand < itemProb['DAMAGE']) return 2;
+    else if (rand < itemProb['HEAL']) return 1;
     else return 0;
 }
 //#endregion
@@ -474,8 +533,8 @@ function collisionAll() {
     // Player, Enemy
     for (let i = 0; i < enemys.length; ++i) {
         if (isCollision(player, enemys[i])) {
+            enemys[i].takeDamage(player.damage, false);
             player.takeDamage(enemys[i].damage);
-            enemys[i].takeDamage(player.damage);
         }
     }
 
@@ -484,7 +543,7 @@ function collisionAll() {
         for (let j = 0; j < bullets.length; ++j) {
             if (isCollision(enemys[i], bullets[j])
                 && !bullets[j].isHit) {
-                enemys[i].takeDamage(bullets[j].damage);
+                enemys[i].takeDamage(bullets[j].damage, true);
                 bullets[j].isHit = true;
             }
         }
@@ -495,7 +554,7 @@ function collisionAll() {
         for (let j = 0; j < bullets.length; ++j) {
             if (isCollision(bosses[i], bullets[j])
                 && !bullets[j].isHit) {
-                bosses[i].takeDamage(bullets[j].damage);
+                bosses[i].takeDamage(bullets[j].damage, true);
                 bullets[j].isHit = true;
             }
         }
@@ -504,8 +563,8 @@ function collisionAll() {
     // Player, Boss
     for (let i = 0; i < bosses.length; ++i) {
         if (isCollision(player, bosses[i])) {
+            bosses[i].takeDamage(player.damage, false);
             player.takeDamage(bosses[i].damage);
-            bosses[i].takeDamage(player.damage);
         }
     }
 
@@ -573,6 +632,12 @@ function drawObject() {
 }
 
 function drawUI() {
+    // Draw Time
+    context.fillStyle = "#000000";
+    context.font = "25px Dotum";
+    context.textAlign = "center";
+    context.fillText(timer, 250, 25);
+
     // Draw Score
     context.fillStyle = "#000000";
     context.font = "25px Dotum";

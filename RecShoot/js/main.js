@@ -55,13 +55,19 @@ class Player extends Transform {
                 if (this.hp > this.maxHp) {
                     this.hp = this.maxHp;
                 }
+                ++itemHealCount;
+                score += itemScore["HEAL"];
                 break;
             case "DAMAGE":
                 this.bulletDamage += item.value;
+                ++itemDamageCount;
+                score += itemScore["DAMAGE"];
                 break;
             case "BOMB":
                 if (this.bombs.length <= 5)
                     this.bombs.push(item.value);
+                ++itemBombCount;
+                score += itemScore["BOMB"];
                 break;
             case "NONE":
                 break;
@@ -78,7 +84,7 @@ class Bullet extends Transform {
     }
 
     progress() {
-        this.pos.y -= this.speed;
+        this.pos.y -= this.speed * dt;
         if (this.pos.y <= 0) {
             this.isHit = true;
         }
@@ -114,7 +120,7 @@ class Enemy extends Transform {
     }
 
     progress() {
-        this.pos.y += this.speed;
+        this.pos.y += this.speed * dt;
         if (this.pos.y >= 800) {
             this.isExist = false;
         }
@@ -173,7 +179,7 @@ class Item extends Transform {
     }
 
     progress() {
-        this.pos.y += this.speed;
+        this.pos.y += this.speed * dt;
         if (this.pos.y > 800 - this.scale.y || this.pos.y < 0)
             this.speed *= -1;
     }
@@ -252,10 +258,12 @@ let isPause = false;
 let backImage;
 
 // Others
+let dt;
 let difficulty = 1.0;
 const maxBulletCount = 14;
 let curBulletCount = maxBulletCount;
-const itemProb = { "NONE": 0.85, "HEAL": 0.08, "DAMAGE": 0.05, "BOMB": 0.02 };
+const itemProb = { "NONE": 0.80, "HEAL": 0.1, "DAMAGE": 0.07, "BOMB": 0.03 };
+const itemScore = { "NONE": 0, "HEAL": 10, "DAMAGE": 30, "BOMB": 50 };
 const itemType = ["NONE", "HEAL", "DAMAGE", "BOMB"];
 let isBomb = false;
 let isReload = false;
@@ -267,6 +275,9 @@ let prev, now, fps;
 // Archivement
 let killedEnemyCount = 0;
 let killedBossCount = 0;
+let itemHealCount = 0;
+let itemDamageCount = 0;
+let itemBombCount = 0;
 
 //#endregion
 
@@ -280,6 +291,9 @@ function start() {
     let fpsElem = document.getElementById("fps");
     let kecElem = document.getElementById("kec");
     let kbcElem = document.getElementById("kbc");
+    let ihcElem = document.getElementById("ihc");
+    let idcElem = document.getElementById("idc");
+    let ibcElem = document.getElementById("ibc");
 
     // 백그라운드 이미지 로딩
     backImage = new Image();
@@ -294,6 +308,7 @@ function start() {
         () => {
             now = Date.now();
             fps = Math.round(1000 / (now - prev));
+            dt = fps / 1000;
             prev = now;
 
             if (!isPause) {
@@ -307,7 +322,7 @@ function start() {
 
             }
         }
-        , 17
+        , 1
     );
 
     // Frame Update
@@ -316,6 +331,9 @@ function start() {
             fpsElem.innerHTML = "FPS " + fps;
             kecElem.innerHTML = "죽인 적 수 " + killedEnemyCount;
             kbcElem.innerHTML = "죽인 보스 수 " + killedBossCount;
+            ihcElem.innerHTML = "획득한 회복 아이템 수 " + itemHealCount;
+            idcElem.innerHTML = "획득한 공격력 증가 아이템 수 " + itemDamageCount;
+            ibcElem.innerHTML = "획득한 진심펀치 아이템 수 " + itemBombCount;
         }
         , 200
     )

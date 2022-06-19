@@ -78,10 +78,10 @@ class Player extends Transform {
                 ++itemHealCount;
                 score += SCORE_TABLE.HEAL;
                 break;
-            case ITEM_TYPE.DAMAGE:
+            case ITEM_TYPE.POWER:
                 this.weaponDamage += item.value;
                 ++itemDamageCount;
-                score += SCORE_TABLE.DAMAGE;
+                score += SCORE_TABLE.POWER;
                 break;
             case ITEM_TYPE.BOMB:
                 if (this.bombs.length <= 5)
@@ -129,7 +129,7 @@ class Weapon extends Transform {
         if (this.type === WEAPON_TYPE.BULLET) {
             context.fillStyle = "#333333";
             context.beginPath();
-            context.arc(this.pos.x, this.pos.y, 25, 0, 360);
+            context.arc(this.pos.x, this.pos.y, 10, 0, 360);
             context.fill();
         } else if (this.type === WEAPON_TYPE.BLADE) {
             context.fillStyle = "#D03D3D"
@@ -180,11 +180,6 @@ class Enemy extends Transform {
     }
 
     draw() {
-        if (this.isDead || !this.isExist) {
-            context.clearRect(this.pos.x, this.pos.y, this.scale.x, this.scale.y);
-            return;
-        }
-
         context.fillStyle = "#FF0000";
         context.fillRect(this.pos.x, this.pos.y, this.scale.x, this.scale.y);
 
@@ -196,14 +191,22 @@ class Enemy extends Transform {
 
     takeDamage(damage, isKnockBack) {
         this.hp -= damage;
-        if (isKnockBack)
+        if (isKnockBack) {
             this.pos.y -= this.knockForce;
-
-        if (this.hp <= 0) {
-            this.hp = 0;
-            this.isDead = true;
+            if (this.hp <= 0) {
+                this.hp = 0;
+                this.isDead = true;
+            } else {
+                this.damage = this.hp;
+            }
         } else {
-            this.damage = this.hp;
+            if (this.hp <= 0) {
+                this.hp = 0;
+                this.isExist = false;
+            } else {
+                this.damage = this.hp;
+            }
+            return;
         }
     }
 }
@@ -215,13 +218,17 @@ class Boss extends Enemy {
 }
 
 class Item extends Transform {
-    constructor(pos, scale, speed, value, type) {
+    constructor(pos, scale, speed, type) {
         super(pos, scale);
         this.speed = speed;
-        this.value = value;
+        this.value = 1;
         this.type = type;
         this.isExist = true;
         this.limitTime = 10;
+
+        if (type === ITEM_TYPE.HEAL) {
+            this.value = Math.floor((Math.random() * 5) + 1);
+        }
 
         setTimeout(
             () => {
@@ -238,16 +245,11 @@ class Item extends Transform {
     }
 
     draw() {
-        if (!this.isExist) {
-            context.clearRect(this.pos.x, this.pos.y, this.scale.x, this.scale.y);
-            return;
-        }
-
         let itemName = "";
         switch (this.type) {
             // 스탯 타입
             case ITEM_TYPE.HEAL: context.fillStyle = "#7AE995"; itemName = "HEAL"; break;
-            case ITEM_TYPE.DAMAGE: context.fillStyle = "#967AE9"; itemName = "DAMAGE"; break;
+            case ITEM_TYPE.POWER: context.fillStyle = "#967AE9"; itemName = "POWER"; break;
             case ITEM_TYPE.BOMB: context.fillStyle = "#E9967A"; itemName = "BOMB"; break;
             // 무기 타입
             case ITEM_TYPE.BULLET: context.fillStyle = "#333333"; itemName = "BULLET"; break;
@@ -275,6 +277,7 @@ class Timer {
         ++this.sec;
         if (this.sec % 60 === 0) {
             ++this.min;
+            difficulty *= 1.2;
             this.sec = 0;
             if (this.min % 60 === 0) {
                 ++this.hour;
@@ -324,9 +327,6 @@ let backImage;
 // Others
 let dt;
 let difficulty = 1.0;
-const maxBulletCount = 14;
-let curBulletCount = maxBulletCount;
-
 let isBomb = false;
 let isReload = false;
 let score = 0;
@@ -339,18 +339,18 @@ const ITEM_PROB = {
     NONE: 0.85, STAT: 0.7, WEAPON: 0.3,
 };
 const ITEM_STAT = {
-    HEAL: 0, DAMAGE: 1, BOMB: 2, NONE: 3,
+    HEAL: 0, POWER: 1, BOMB: 2, NONE: 3,
 }
 const ITEM_WEAPON = {
     BULLET: 0, BLADE: 1, LASER: 2, NONE: 3,
 }
 const SCORE_TABLE = {
-    HEAL: 30, DAMAGE: 50, BOMB: 60,
+    HEAL: 30, POWER: 50, BOMB: 60,
     WEAPON: 50,
 }
 const ITEM_TYPE = {
     // Stat Item
-    NONE: 0, HEAL: 1, DAMAGE: 2, BOMB: 3,
+    NONE: 0, HEAL: 1, POWER: 2, BOMB: 3,
     // Weapon Item
     BULLET: 10, BLADE: 11, LASER: 12,
 };
@@ -359,11 +359,10 @@ const WEAPON_TYPE = {
 };
 const OBJECT_SPEED = {
     PLAYER: 100,
-    BULLET: 150, BLADE: 150, LASER: 150,
-    ENEMY: 100, BOSS: 100,
-    ITEM: 100,
+    BULLET: 130, BLADE: 250, LASER: 130,
+    ENEMY: 80, BOSS: 90,
+    ITEM: 90,
 }
-
 const DOC_ELEMS = {
     FS: document.getElementById("fs"),
     FPS: document.getElementById("fps"),
@@ -383,10 +382,7 @@ let killedBossCount = 0;
 let itemHealCount = 0;
 let itemDamageCount = 0;
 let itemBombCount = 0;
-
 //#endregion
-
-// 참고 자료 https://heekim0719.tistory.com/58
 
 //#region Entry Function
 function start() {
@@ -402,7 +398,7 @@ function start() {
 
     // Main Update
     prev = Date.now();
-    let timeId = setTimeout(
+    let mainId = setTimeout(
         function update() {
             now = Date.now();
             fps = Math.round(1000 / (now - prev));
@@ -412,31 +408,39 @@ function start() {
             if (!isPause) {
                 // 주기적으로 실행
                 GameUpdate();
-                AchievementUpdate();
             } else {
                 // 리트라이, 랭킹 등. 작업 처리
                 finalScore = score + timer.getSeconds() * difficulty;
             }
-            timeId = setTimeout(update, 1);
+            mainId = setTimeout(update, 1);
         }
         , 1
     );
 
+    // Achievement Update
+    let achieveId = setTimeout(
+        function update() {
+            AchievementUpdate();
+            achieveId = setTimeout(update, 200);
+        }
+    );
+
     // Time Update
     timer = new Timer();
-    setInterval(
-        () => {
+    let timeId = setTimeout(
+        function update() {
             if (!isPause) {
                 timer.update();
             } else {
 
             }
+            timeId = setTimeout(update, 1000);
         }
-        , 1000
     )
 }
 //#endregion
 
+//#region Update
 function GameUpdate() {
     createEnemy();
     progressAll();
@@ -445,14 +449,46 @@ function GameUpdate() {
 }
 
 function AchievementUpdate() {
-    DOC_ELEMS.FS.innerHTML = "최종 점수 " + finalScore;
     DOC_ELEMS.FPS.innerHTML = "FPS " + fps;
+    DOC_ELEMS.FS.innerHTML = "최종 점수 " + finalScore;
     DOC_ELEMS.KEC.innerHTML = "죽인 적 수 " + killedEnemyCount;
     DOC_ELEMS.KBC.innerHTML = "죽인 보스 수 " + killedBossCount;
     DOC_ELEMS.IHC.innerHTML = "획득한 힐 수 " + itemHealCount;
     DOC_ELEMS.IDC.innerHTML = "획득한 파워업 수 " + itemDamageCount;
     DOC_ELEMS.IBC.innerHTML = "획득한 폭탄 수 " + itemBombCount;
 }
+//#endregion
+
+//#region Function
+function pickRandomItem() {
+    let resultItemType = ITEM_TYPE.NONE;
+    let rand = Math.random();
+    if (rand < ITEM_PROB.NONE) return ITEM_TYPE.NONE;
+    else {
+        rand = Math.random();
+        if (rand < ITEM_PROB.STAT) {
+            rand = Math.floor(Math.random() * (ITEM_STAT.NONE + 1));
+            switch (rand) {
+                case ITEM_STAT.HEAL: resultItemType = ITEM_TYPE.HEAL; break;
+                case ITEM_STAT.POWER: resultItemType = ITEM_TYPE.POWER; break;
+                case ITEM_STAT.BOMB: resultItemType = ITEM_TYPE.BOMB; break;
+                case ITEM_STAT.NONE: resultItemType = ITEM_TYPE.NONE; break;
+            }
+        } else {
+            rand = Math.floor(Math.random() * (ITEM_WEAPON.NONE + 1));
+            switch (rand) {
+                case ITEM_WEAPON.BULLET: resultItemType = ITEM_TYPE.BULLET; break;
+                case ITEM_WEAPON.BLADE: resultItemType = ITEM_TYPE.BLADE; break;
+                case ITEM_WEAPON.LASER: resultItemType = ITEM_TYPE.LASER; break;
+                case ITEM_WEAPON.NONE: resultItemType = ITEM_TYPE.NONE; break;
+            }
+        }
+    }
+
+    return resultItemType;
+}
+//#endregion
+
 //#region Objects
 function createPlayer() {
     const playerScale = new Vector2D(100, 100);
@@ -465,7 +501,8 @@ function createPlayer() {
             && player.pos.x + player.speed < canvas.width) {
             player.pos.x += player.speed;
         }
-        else if ((e.key === "Left" || e.key === "ArrowLeft")
+
+        if ((e.key === "Left" || e.key === "ArrowLeft")
             && player.pos.x - player.speed >= 0) {
             player.pos.x -= player.speed;
         }
@@ -484,64 +521,10 @@ function createPlayer() {
             //     return;
 
             explodeBomb();
-            // const explode = new Promise(() => {
-            //     setTimeout(explodeBomb, 800);
-            // });
         }
     });
-
-    // 재장전
-    // document.addEventListener("keydown", (e) => {
-    //     if (e.key === "c" || e.key === "C") {
-    //         if (isReload) {
-    //             return;
-    //         }
-
-    //         if (curBulletCount == maxBulletCount) {
-    //             return;
-    //         }
-
-    //         isReload = true;
-    //         const reload = new Promise(() => {
-    //             setTimeout(reloadBullet, 800);
-    //         });
-    //     }
-    // });
 }
-// async function reloadBullet() {
-//     isReload = false;
-//     curBulletCount = maxBulletCount;
-// }
 
-function createEnemy() {
-    if (enemys.length > 0)
-        return;
-
-    if (bosses.length > 0)
-        return;
-
-    const enemyCount = Math.floor(Math.random() * 5) + 1;
-    if (enemyCount === 1) {
-        const bossScale = new Vector2D(500, 500);
-        const bossPos = new Vector2D(0, -500);
-        const bossHp = Math.floor(Math.random() * 30 * difficulty) + 1;
-        bosses.push(new Boss(bossPos, bossScale, bossHp, OBJECT_SPEED.BOSS, 15.0));
-        return;
-    }
-
-    const enemyX = [0, 100, 200, 300, 400];
-    for (let i = 0; i < enemyCount; ++i) {
-        const randX = Math.floor(Math.random() * enemyX.length);
-        const enemyScale = new Vector2D(100, 100);
-        const enemyPos = new Vector2D(enemyX[randX], -100);
-        const enemyHp = Math.floor(Math.random() * 5 * difficulty) + 1;
-        enemys.push(new Enemy(enemyPos, enemyScale, enemyHp, OBJECT_SPEED.ENEMY, 10.0));
-        enemyX.splice(randX, 1);
-    }
-}
-//#endregion
-
-//#region Weapon, Attack
 function fireWeapon() {
     // 기본 약공격
     const weaponScale = new Vector2D(50, 50);
@@ -587,32 +570,31 @@ async function explodeBomb() {
     }
 }
 
-function pickRandomItem() {
-    let resultItemType = ITEM_TYPE.NONE;
-    let rand = Math.random();
-    if (rand < ITEM_PROB.NONE) return ITEM_TYPE.NONE;
-    else {
-        rand = Math.random();
-        if (rand < ITEM_PROB.STAT) {
-            rand = Math.floor(Math.random() * (ITEM_STAT.NONE + 1));
-            switch (rand) {
-                case ITEM_STAT.HEAL: resultItemType = ITEM_TYPE.HEAL; break;
-                case ITEM_STAT.DAMAGE: resultItemType = ITEM_TYPE.DAMAGE; break;
-                case ITEM_STAT.BOMB: resultItemType = ITEM_TYPE.BOMB; break;
-                case ITEM_STAT.NONE: resultItemType = ITEM_TYPE.NONE; break;
-            }
-        } else {
-            rand = Math.floor(Math.random() * (ITEM_WEAPON.NONE + 1));
-            switch (rand) {
-                case ITEM_WEAPON.BULLET: resultItemType = ITEM_TYPE.BULLET; break;
-                case ITEM_WEAPON.BLADE: resultItemType = ITEM_TYPE.BLADE; break;
-                case ITEM_WEAPON.LASER: resultItemType = ITEM_TYPE.LASER; break;
-                case ITEM_WEAPON.NONE: resultItemType = ITEM_TYPE.NONE; break;
-            }
-        }
+function createEnemy() {
+    if (enemys.length > 0)
+        return;
+
+    if (bosses.length > 0)
+        return;
+
+    const enemyCount = Math.floor(Math.random() * 5) + 1;
+    if (enemyCount === 1) {
+        const bossScale = new Vector2D(500, 500);
+        const bossPos = new Vector2D(0, -500);
+        const bossHp = Math.floor(Math.random() * 30 * difficulty) + 1;
+        bosses.push(new Boss(bossPos, bossScale, bossHp, OBJECT_SPEED.BOSS, 15.0));
+        return;
     }
 
-    return resultItemType;
+    const enemyX = [0, 100, 200, 300, 400];
+    for (let i = 0; i < enemyCount; ++i) {
+        const randX = Math.floor(Math.random() * enemyX.length);
+        const enemyScale = new Vector2D(100, 100);
+        const enemyPos = new Vector2D(enemyX[randX], -100);
+        const enemyHp = Math.floor(Math.random() * 5 * difficulty) + 1;
+        enemys.push(new Enemy(enemyPos, enemyScale, enemyHp, OBJECT_SPEED.ENEMY, 10.0));
+        enemyX.splice(randX, 1);
+    }
 }
 //#endregion
 
@@ -641,7 +623,7 @@ function progressObject() {
         bosses[i].progress();
         if (bosses[i].isDead) {
             if (bosses[i].itemType !== ITEM_TYPE.NONE) {
-                const item = new Item(new Vector2D(200, bosses[i].pos.y <= 0 ? 0 : bosses[i].pos.y), new Vector2D(100, 100), bosses[i].speed, 1, bosses[i].itemType);
+                const item = new Item(new Vector2D(200, bosses[i].pos.y <= 0 ? 0 : bosses[i].pos.y), new Vector2D(100, 100), bosses[i].speed, bosses[i].itemType);
                 items.push(item);
             }
             score += bosses[i].score * difficulty;
@@ -659,7 +641,7 @@ function progressObject() {
         enemys[i].progress();
         if (enemys[i].isDead) {
             if (enemys[i].itemType !== ITEM_TYPE.NONE) {
-                const item = new Item(new Vector2D(enemys[i].pos.x, enemys[i].pos.y <= 0 ? 0 : enemys[i].pos.y), new Vector2D(100, 100), enemys[i].speed, 1, enemys[i].itemType);
+                const item = new Item(new Vector2D(enemys[i].pos.x, enemys[i].pos.y <= 0 ? 0 : enemys[i].pos.y), new Vector2D(100, 100), enemys[i].speed, enemys[i].itemType);
                 items.push(item);
             }
             score += enemys[i].score * difficulty;

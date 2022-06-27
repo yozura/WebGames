@@ -13,15 +13,31 @@ class Transform {
     }
 }
 
+class StaticObjects extends Transform {
+    constructor(pos, scale, color) {
+        super(pos, scale);
+        this.color = color;
+    }
+
+    progress() {
+
+    }
+
+    draw() {
+        context.fillStyle = this.color;
+        context.fillRect(this.pos.x, this.pos.y, this.scale.x, this.scale.y);
+    }
+}
+
 class Player extends Transform {
     constructor(pos, scale, hp) {
         super(pos, scale);
         this.hp = hp;
         this.damage = hp;
         this.speed = OBJECT_SPEED.PLAYER;
-        this.weaponType = WEAPON_TYPE.BLADE;
+        this.weaponType = WEAPON_TYPE.NEEDLE;
         this.weaponDamage = 1;
-        this.bombs = [];
+        this.bombs = [1, 1, 1, 1, 1];
         this.isDead = false;
     }
 
@@ -32,6 +48,8 @@ class Player extends Transform {
         // Body
         context.fillStyle = "#0000FF";
         context.fillRect(this.pos.x, this.pos.y, this.scale.x, this.scale.y);
+
+        // Accessory
         if (this.weaponType === WEAPON_TYPE.BULLET) {
             context.fillStyle = "#333333";
             context.fillRect(this.pos.x, this.pos.y, this.scale.x, this.scale.y / 3);
@@ -48,6 +66,8 @@ class Player extends Transform {
             context.lineTo(this.pos.x, this.pos.y + 10);
             context.lineTo(this.pos.x - 10, this.pos.y);
             context.fill();
+        } else if (this.weaponType === WEAPON_TYPE.NEEDLE) {
+            context.fillStyle = "#B5C2CB"
         }
 
         // Collision Rectangle
@@ -100,10 +120,10 @@ class Player extends Transform {
                     score += SCORE_TABLE.WEAPON;
                 this.weaponType = WEAPON_TYPE.BLADE;
                 break;
-            case ITEM_TYPE.LASER:
-                if (this.weaponType === WEAPON_TYPE.LASER)
+            case ITEM_TYPE.NEEDLE:
+                if (this.weaponType === WEAPON_TYPE.NEEDLE)
                     score += SCORE_TABLE.WEAPON;
-                this.weaponType = WEAPON_TYPE.LASER;
+                this.weaponType = WEAPON_TYPE.NEEDLE;
                 break;
         }
     }
@@ -116,6 +136,7 @@ class Weapon extends Transform {
         this.isHit = false;
         this.type = type;
         this.speed = speed;
+        this.type = type;
     }
 
     progress() {
@@ -147,12 +168,13 @@ class Weapon extends Transform {
             context.lineTo(this.pos.x + 15, this.pos.y + 40);
             context.lineTo(this.pos.x + 5, this.pos.y + 40);
             context.fill();
-        } else if (this.type === WEAPON_TYPE.LASER) {
-            context.fillStyle = "#7FD449"
+        } else if (this.type === WEAPON_TYPE.NEEDLE) {
+            context.fillStyle = "#B5C2CB"
             context.beginPath();
-            context.moveTo(this.pos.x, this.pos.y);
-            context.lineTo(this.pos.x - this.scale.x / 2, this.pos.y + this.scale.y / 2);
-            context.lineTo(this.pos.x + this.scale.x / 2, this.pos.y + this.scale.y / 2);
+            context.moveTo(this.pos.x - 1, this.pos.y - 20);
+            context.lineTo(this.pos.x + 1, this.pos.y - 20);
+            context.lineTo(this.pos.x + 3, this.pos.y + 30);
+            context.lineTo(this.pos.x - 3, this.pos.y + 30);
             context.fill();
         }
     }
@@ -254,7 +276,7 @@ class Item extends Transform {
             // 무기 타입
             case ITEM_TYPE.BULLET: context.fillStyle = "#333333"; itemName = "BULLET"; break;
             case ITEM_TYPE.BLADE: context.fillStyle = "#D03D3D"; itemName = "BLADE"; break;
-            case ITEM_TYPE.LASER: context.fillStyle = "#7FD449"; itemName = "LASER"; break;
+            case ITEM_TYPE.NEEDLE: context.fillStyle = "#7FD449"; itemName = "NEEDLE"; break;
         }
         context.fillRect(this.pos.x, this.pos.y, this.scale.x, this.scale.y);
 
@@ -314,6 +336,7 @@ let intervalID;
 
 // Objects
 let player;
+const statics = [];
 const bosses = [];
 const enemys = [];
 const weapons = [];
@@ -342,7 +365,7 @@ const ITEM_STAT = {
     HEAL: 0, POWER: 1, BOMB: 2, NONE: 3,
 }
 const ITEM_WEAPON = {
-    BULLET: 0, BLADE: 1, LASER: 2, NONE: 3,
+    BULLET: 0, BLADE: 1, NEEDLE: 2, NONE: 3,
 }
 const SCORE_TABLE = {
     HEAL: 30, POWER: 50, BOMB: 60,
@@ -352,14 +375,14 @@ const ITEM_TYPE = {
     // Stat Item
     NONE: 0, HEAL: 1, POWER: 2, BOMB: 3,
     // Weapon Item
-    BULLET: 10, BLADE: 11, LASER: 12,
+    BULLET: 10, BLADE: 11, NEEDLE: 12,
 };
 const WEAPON_TYPE = {
-    BULLET: 0, BLADE: 1, LASER: 2, NONE: 3,
+    BULLET: 0, BLADE: 1, NEEDLE: 2, NONE: 3,
 };
 const OBJECT_SPEED = {
     PLAYER: 100,
-    BULLET: 130, BLADE: 250, LASER: 130,
+    BULLET: 130, BLADE: 180, NEEDLE: 130,
     ENEMY: 80, BOSS: 90,
     ITEM: 90,
 }
@@ -410,7 +433,7 @@ function start() {
                 GameUpdate();
             } else {
                 // 리트라이, 랭킹 등. 작업 처리
-                finalScore = score + timer.getSeconds() * difficulty;
+                finalScore = score + timer.getSeconds();
             }
             mainId = setTimeout(update, 1);
         }
@@ -479,7 +502,7 @@ function pickRandomItem() {
             switch (rand) {
                 case ITEM_WEAPON.BULLET: resultItemType = ITEM_TYPE.BULLET; break;
                 case ITEM_WEAPON.BLADE: resultItemType = ITEM_TYPE.BLADE; break;
-                case ITEM_WEAPON.LASER: resultItemType = ITEM_TYPE.LASER; break;
+                case ITEM_WEAPON.NEEDLE: resultItemType = ITEM_TYPE.NEEDLE; break;
                 case ITEM_WEAPON.NONE: resultItemType = ITEM_TYPE.NONE; break;
             }
         }
@@ -514,11 +537,11 @@ function createPlayer() {
 
         // 폭탄 발사
         if (e.key === "z" || e.key === "Z") {
-            // if (isBomb)
-            //     return;
+            if (isBomb)
+                return;
 
-            // if (player.bombs.length <= 0)
-            //     return;
+            if (player.bombs.length <= 0)
+                return;
 
             explodeBomb();
         }
@@ -533,7 +556,7 @@ function fireWeapon() {
     switch (player.weaponType) {
         case WEAPON_TYPE.BULLET: weaponSpeed = OBJECT_SPEED.BULLET; break;
         case WEAPON_TYPE.BLADE: weaponSpeed = OBJECT_SPEED.BLADE; break;
-        case WEAPON_TYPE.LASER: weaponSpeed = OBJECT_SPEED.LASER; break;
+        case WEAPON_TYPE.NEEDLE: weaponSpeed = OBJECT_SPEED.NEEDLE; break;
     }
     weapons.push(new Weapon(weaponPos, weaponScale, weaponSpeed, player.weaponDamage, player.weaponType));
 }
@@ -541,15 +564,21 @@ function fireWeapon() {
 async function explodeBomb() {
     isBomb = true;
     player.bombs.pop();
+    const bombWeaponType = player.weaponType;
+    const bombPlayerPos = player.pos;
 
     // 무기 타입마다 다른 설정
-    if (player.weaponType == WEAPON_TYPE.BULLET) {
-        // 거대한 원이 천천히 앞으로 나감 ㅋㅋ
+    if (bombWeaponType === WEAPON_TYPE.BULLET) {
+        // 모든 라인에서 총알이 2초간 발사
         const BULLET_BOMB = setInterval(() => {
-
-        });
+            for (let i = 0; i < 5; ++i) {
+                const weaponScale = new Vector2D(50, 50);
+                const weaponPos = new Vector2D((i * 100) + weaponScale.x, canvas.height - weaponScale.y);
+                weapons.push(new Weapon(weaponPos, weaponScale, OBJECT_SPEED.NEEDLE, player.weaponDamage, player.weaponType));
+            }
+        }, 200);
         setTimeout(() => { clearInterval(BULLET_BOMB); isBomb = false; }, 3000);
-    } else if (player.weaponType == WEAPON_TYPE.BLADE) {
+    } else if (bombWeaponType === WEAPON_TYPE.BLADE) {
         // 7초간 빠른 속도로 칼 자동 발사.
         const BLADE_BOMB = setInterval(() => {
             const weaponScale = new Vector2D(50, 50);
@@ -557,16 +586,26 @@ async function explodeBomb() {
             weapons.push(new Weapon(weaponPos, weaponScale, OBJECT_SPEED.BLADE, player.weaponDamage, player.weaponType));
         }, 100);
         setTimeout(() => { clearInterval(BLADE_BOMB); isBomb = false; }, 7000);
-    } else if (player.weaponType == WEAPON_TYPE.LASER) {
-        // 모든 라인에서 레이저가 2초간 발사 됨
-        const LASER_BOMB = setInterval(() => {
-            for (let i = 0; i < 5; ++i) {
-                const weaponScale = new Vector2D(50, 50);
-                const weaponPos = new Vector2D((i * 100) + weaponScale.x, canvas.height - weaponScale.y);
-                weapons.push(new Weapon(weaponPos, weaponScale, OBJECT_SPEED.LASER, player.weaponDamage, player.weaponType));
+    } else if (bombWeaponType === WEAPON_TYPE.NEEDLE) {
+        // 10초간 스킬을 사용한 라인에 니들 터렛을 박아놓는다.
+        const turretScale = new Vector2D(50, 50);
+        const turretPos = new Vector2D(bombPlayerPos.x + turretScale.x / 2, bombPlayerPos.y + turretScale.y / 2);
+        statics.push(new StaticObjects(turretPos, turretScale, "#3E424B"));
+        const NEEDLE_BOMB = setInterval(() => {
+            const weaponScale = new Vector2D(50, 50);
+            const weaponPos = new Vector2D(turretPos.x + weaponScale.x / 2, turretPos.y - weaponScale.y / 2);
+            weapons.push(new Weapon(weaponPos, weaponScale, OBJECT_SPEED.NEEDLE, player.weaponDamage, bombWeaponType));
+            console.log("why did not run");
+        }, 150);
+        setTimeout(() => {
+            clearInterval(NEEDLE_BOMB);
+            isBomb = false;
+            for (let i = 0; i < statics.length; ++i) {
+                if (statics[i].color === "#3E424B") {
+                    statics.splice(i, 1);
+                }
             }
-        }, 200);
-        setTimeout(() => { clearInterval(LASER_BOMB); isBomb = false; }, 2000);
+        }, 10000);
     }
 }
 
@@ -607,6 +646,11 @@ function progressObject() {
     // Progress Player
     if (player !== null)
         player.progress();
+
+    // Progress Static Objects
+    for (let i = 0; i < statics.length; ++i) {
+        statics[i].progress();
+    }
 
     // Progress Bullet
     for (let i = 0; i < weapons.length;) {
@@ -752,6 +796,10 @@ function drawObject() {
     if (player !== null)
         player.draw();
 
+    // Draw Static Objects
+    for (let i = 0; i < statics.length; ++i) {
+        statics[i].draw();
+    }
     // Draw Bullet
     for (let i = 0; i < weapons.length; ++i) {
         weapons[i].draw();

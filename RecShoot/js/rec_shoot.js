@@ -13,6 +13,28 @@ class Transform {
     }
 }
 
+class ImageManager {
+    constructor() {
+        this.images = {};
+    }
+
+    cacheImage(key, value) {
+        if (key in this.images) {
+            return;
+        }
+
+        this.images[key] = value;
+    }
+
+    getImage(key) {
+        if (key in this.images) {
+            return this.images[key];
+        }
+
+        return;
+    }
+}
+
 class StaticObjects extends Transform {
     constructor(pos, scale, color) {
         super(pos, scale);
@@ -30,14 +52,14 @@ class StaticObjects extends Transform {
 }
 
 class Player extends Transform {
-    constructor(pos, scale, hp) {
+    constructor(pos, scale, hp, weaponType) {
         super(pos, scale);
         this.hp = hp;
         this.damage = hp;
         this.speed = OBJECT_SPEED.PLAYER;
-        this.weaponType = WEAPON_TYPE.NEEDLE;
+        this.weaponType = weaponType;
         this.weaponDamage = 1;
-        this.bombs = [1, 1, 1, 1, 1];
+        this.bombs = [1, 1, 1];
         this.isDead = false;
     }
 
@@ -45,34 +67,44 @@ class Player extends Transform {
     }
 
     draw() {
-        // Body
-        context.fillStyle = "#0000FF";
-        context.fillRect(this.pos.x, this.pos.y, this.scale.x, this.scale.y);
+        if (this.weaponType === WEAPON_TYPE.FIREFOX) {
+            const bodyImg = ImgMgr.getImage(IMAGE_TYPE.PLAYER_FIREFOX_TYPE);
+            bodyImg.src = IMAGE_PATH.PLAYER_FIREFOX_TYPE;
+            context.drawImage(bodyImg, this.pos.x, this.pos.y, this.scale.x, this.scale.y);
 
-        // Accessory
-        if (this.weaponType === WEAPON_TYPE.BULLET) {
-            context.fillStyle = "#333333";
-            context.fillRect(this.pos.x, this.pos.y, this.scale.x, this.scale.y / 3);
-        } else if (this.weaponType === WEAPON_TYPE.BLADE) {
-            context.fillStyle = "#D03D3D";
-            context.fillRect(this.pos.x, this.pos.y + 10, this.scale.x, this.scale.y - 85);
-            context.beginPath();
-            context.moveTo(this.pos.x - 10, this.pos.y);
-            context.lineTo(this.pos.x - 15, this.pos.y + 5);
-            context.lineTo(this.pos.x - 5, this.pos.y + 10);
-            context.lineTo(this.pos.x - 15, this.pos.y + 20);
-            context.lineTo(this.pos.x - 5, this.pos.y + 30);
-            context.lineTo(this.pos.x, this.pos.y + 20);
-            context.lineTo(this.pos.x, this.pos.y + 10);
-            context.lineTo(this.pos.x - 10, this.pos.y);
-            context.fill();
-        } else if (this.weaponType === WEAPON_TYPE.NEEDLE) {
-            context.fillStyle = "#B5C2CB"
+            // context.fillStyle = "#333333";
+            // context.fillRect(this.pos.x, this.pos.y, this.scale.x, this.scale.y / 3);
+        } else if (this.weaponType === WEAPON_TYPE.FLUTTER) {
+            const bodyImg = ImgMgr.getImage(IMAGE_TYPE.PLAYER_FLUTTER_TYPE);
+            bodyImg.src = IMAGE_PATH.PLAYER_FLUTTER_TYPE;
+            context.drawImage(bodyImg, this.pos.x, this.pos.y, this.scale.x, this.scale.y);
+
+            // context.fillStyle = "#D03D3D";
+            // context.fillRect(this.pos.x, this.pos.y + 10, this.scale.x, this.scale.y - 85);
+            // context.beginPath();
+            // context.moveTo(this.pos.x - 10, this.pos.y);
+            // context.lineTo(this.pos.x - 15, this.pos.y + 5);
+            // context.lineTo(this.pos.x - 5, this.pos.y + 10);
+            // context.lineTo(this.pos.x - 15, this.pos.y + 20);
+            // context.lineTo(this.pos.x - 5, this.pos.y + 30);
+            // context.lineTo(this.pos.x, this.pos.y + 20);
+            // context.lineTo(this.pos.x, this.pos.y + 10);
+            // context.lineTo(this.pos.x - 10, this.pos.y);
+            // context.fill();
+        } else if (this.weaponType === WEAPON_TYPE.VUE) {
+            const bodyImg = ImgMgr.getImage(IMAGE_TYPE.PLAYER_VUE_TYPE);
+            bodyImg.src = IMAGE_PATH.PLAYER_VUE_TYPE;
+            context.drawImage(bodyImg, this.pos.x, this.pos.y, this.scale.x, this.scale.y);
+
+            // context.fillStyle = "#B5C2CB"
+            // context.beginPath();
+            // context.moveTo(this.pos.x + this.scale.x / 2, this.pos.y);
+            // context.lineTo(this.pos.x, this.pos.y);
+            // context.lineTo(this.pos.x + this.scale.x, this.pos.y + this.scale.y / 2);
+            // context.fill();
         }
 
-        // Collision Rectangle
-
-        context.fillStyle = "#FFFFFF";
+        context.fillStyle = "#000000";
         context.font = "25px Dotum";
         context.textAlign = "center";
         context.fillText(this.hp, this.pos.x + this.scale.x / 2, this.pos.y + this.scale.y / 2 + 8);
@@ -110,20 +142,20 @@ class Player extends Transform {
                 score += SCORE_TABLE.BOMB;
                 break;
             // 무기 타입
-            case ITEM_TYPE.BULLET:
-                if (this.weaponType === WEAPON_TYPE.BULLET)
+            case ITEM_TYPE.FIREFOX:
+                if (this.weaponType === WEAPON_TYPE.FIREFOX)
                     score += SCORE_TABLE.WEAPON;
-                this.weaponType = WEAPON_TYPE.BULLET;
+                this.weaponType = WEAPON_TYPE.FIREFOX;
                 break;
-            case ITEM_TYPE.BLADE:
-                if (this.weaponType === WEAPON_TYPE.BLADE)
+            case ITEM_TYPE.FLUTTER:
+                if (this.weaponType === WEAPON_TYPE.FLUTTER)
                     score += SCORE_TABLE.WEAPON;
-                this.weaponType = WEAPON_TYPE.BLADE;
+                this.weaponType = WEAPON_TYPE.FLUTTER;
                 break;
-            case ITEM_TYPE.NEEDLE:
-                if (this.weaponType === WEAPON_TYPE.NEEDLE)
+            case ITEM_TYPE.VUE:
+                if (this.weaponType === WEAPON_TYPE.VUE)
                     score += SCORE_TABLE.WEAPON;
-                this.weaponType = WEAPON_TYPE.NEEDLE;
+                this.weaponType = WEAPON_TYPE.VUE;
                 break;
         }
     }
@@ -140,42 +172,55 @@ class Weapon extends Transform {
     }
 
     progress() {
-        this.pos.y -= this.speed * dt;
+        this.pos.y -= this.speed;
         if (this.pos.y <= 0) {
             this.isHit = true;
         }
     }
 
     draw() {
-        if (this.type === WEAPON_TYPE.BULLET) {
-            context.fillStyle = "#333333";
-            context.beginPath();
-            context.arc(this.pos.x, this.pos.y, 10, 0, 360);
-            context.fill();
-        } else if (this.type === WEAPON_TYPE.BLADE) {
-            context.fillStyle = "#D03D3D"
-            context.beginPath();
-            context.moveTo(this.pos.x + 5, this.pos.y);
-            context.lineTo(this.pos.x - 5, this.pos.y + 15);
-            context.lineTo(this.pos.x - 5, this.pos.y + 40);
-            context.lineTo(this.pos.x - 15, this.pos.y + 40);
-            context.lineTo(this.pos.x - 15, this.pos.y + 50);
-            context.lineTo(this.pos.x - 5, this.pos.y + 50);
-            context.lineTo(this.pos.x - 5, this.pos.y + 60);
-            context.lineTo(this.pos.x + 5, this.pos.y + 60);
-            context.lineTo(this.pos.x + 5, this.pos.y + 50);
-            context.lineTo(this.pos.x + 15, this.pos.y + 50);
-            context.lineTo(this.pos.x + 15, this.pos.y + 40);
-            context.lineTo(this.pos.x + 5, this.pos.y + 40);
-            context.fill();
-        } else if (this.type === WEAPON_TYPE.NEEDLE) {
-            context.fillStyle = "#B5C2CB"
-            context.beginPath();
-            context.moveTo(this.pos.x - 1, this.pos.y - 20);
-            context.lineTo(this.pos.x + 1, this.pos.y - 20);
-            context.lineTo(this.pos.x + 3, this.pos.y + 30);
-            context.lineTo(this.pos.x - 3, this.pos.y + 30);
-            context.fill();
+        if (this.type === WEAPON_TYPE.FIREFOX) {
+            const bodyImg = ImgMgr.getImage(IMAGE_TYPE.WEAPON_FIREFOX_TYPE);
+            bodyImg.src = IMAGE_PATH.WEAPON_FIREFOX_TYPE;
+            context.drawImage(bodyImg, this.pos.x, this.pos.y, this.scale.x, this.scale.y);
+
+            // context.fillStyle = "#333333";
+            // context.beginPath();
+            // context.arc(this.pos.x, this.pos.y, 10, 0, 360);
+            // context.fill();
+        } else if (this.type === WEAPON_TYPE.FLUTTER) {
+            const bodyImg = ImgMgr.getImage(IMAGE_TYPE.WEAPON_FLUTTER_TYPE);
+            bodyImg.src = IMAGE_PATH.WEAPON_FLUTTER_TYPE;
+            context.drawImage(bodyImg, this.pos.x, this.pos.y, this.scale.x, this.scale.y);
+
+            // context.fillStyle = "#D03D3D"
+            // context.beginPath();
+            // context.moveTo(this.pos.x + 5, this.pos.y);
+            // context.lineTo(this.pos.x - 5, this.pos.y + 15);
+            // context.lineTo(this.pos.x - 5, this.pos.y + 40);
+            // context.lineTo(this.pos.x - 15, this.pos.y + 40);
+            // context.lineTo(this.pos.x - 15, this.pos.y + 50);
+            // context.lineTo(this.pos.x - 5, this.pos.y + 50);
+            // context.lineTo(this.pos.x - 5, this.pos.y + 60);
+            // context.lineTo(this.pos.x + 5, this.pos.y + 60);
+            // context.lineTo(this.pos.x + 5, this.pos.y + 50);
+            // context.lineTo(this.pos.x + 15, this.pos.y + 50);
+            // context.lineTo(this.pos.x + 15, this.pos.y + 40);
+            // context.lineTo(this.pos.x + 5, this.pos.y + 40);
+            // context.fill();
+        } else if (this.type === WEAPON_TYPE.VUE) {
+            const bodyImg = ImgMgr.getImage(IMAGE_TYPE.WEAPON_VUE_TYPE);
+            bodyImg.src = IMAGE_PATH.WEAPON_VUE_TYPE;
+            context.drawImage(bodyImg, this.pos.x, this.pos.y, this.scale.x, this.scale.y);
+
+
+            // context.fillStyle = "#B5C2CB"
+            // context.beginPath();
+            // context.moveTo(this.pos.x - 1, this.pos.y - 20);
+            // context.lineTo(this.pos.x + 1, this.pos.y - 20);
+            // context.lineTo(this.pos.x + 3, this.pos.y + 30);
+            // context.lineTo(this.pos.x - 3, this.pos.y + 30);
+            // context.fill();
         }
     }
 }
@@ -190,20 +235,21 @@ class Enemy extends Transform {
         this.isDead = false;
         this.isExist = true;
         this.knockForce = knockForce;
+        this.bodyImg = ImgMgr.getImage(IMAGE_TYPE.ENEMY);
 
         this.itemType = pickRandomItem();
     }
 
     progress() {
-        this.pos.y += this.speed * dt;
+        this.pos.y += this.speed;
         if (this.pos.y >= 800) {
             this.isExist = false;
         }
     }
 
     draw() {
-        context.fillStyle = "#FF0000";
-        context.fillRect(this.pos.x, this.pos.y, this.scale.x, this.scale.y);
+        this.bodyImg.src = IMAGE_PATH.ENEMY;
+        context.drawImage(this.bodyImg, this.pos.x, this.pos.y, this.scale.x, this.scale.y);
 
         context.fillStyle = "#000000";
         context.font = "25px Dotum";
@@ -231,11 +277,25 @@ class Enemy extends Transform {
             return;
         }
     }
+
+
 }
 
 class Boss extends Enemy {
     constructor(pos, scale, hp, speed, knockForce) {
         super(pos, scale, hp, speed, knockForce);
+
+        this.bodyImg = ImgMgr.getImage(IMAGE_TYPE.BOSS);
+    }
+
+    draw() {
+        this.bodyImg.src = IMAGE_PATH.BOSS;
+        context.drawImage(this.bodyImg, this.pos.x, this.pos.y, this.scale.x, this.scale.y);
+
+        context.fillStyle = "#000000";
+        context.font = "25px Dotum";
+        context.textAlign = "center";
+        context.fillText(this.hp, this.pos.x + this.scale.x / 2, this.pos.y + this.scale.y / 2 + 8);
     }
 }
 
@@ -248,7 +308,7 @@ class Item extends Transform {
         this.isExist = true;
         this.limitTime = 10;
 
-        if (type === ITEM_TYPE.HEAL) {
+        if (this.type === ITEM_TYPE.HEAL) {
             this.value = Math.floor((Math.random() * 5) + 1);
         }
 
@@ -261,8 +321,8 @@ class Item extends Transform {
     }
 
     progress() {
-        this.pos.y += this.speed * dt;
-        if (this.pos.y > 800 - this.scale.y || this.pos.y < 0)
+        this.pos.y += this.speed;
+        if (this.pos.y > 700 - this.scale.y || this.pos.y < 0)
             this.speed *= -1;
     }
 
@@ -270,20 +330,56 @@ class Item extends Transform {
         let itemName = "";
         switch (this.type) {
             // 스탯 타입
-            case ITEM_TYPE.HEAL: context.fillStyle = "#7AE995"; itemName = "HEAL"; break;
-            case ITEM_TYPE.POWER: context.fillStyle = "#967AE9"; itemName = "POWER"; break;
-            case ITEM_TYPE.BOMB: context.fillStyle = "#E9967A"; itemName = "BOMB"; break;
+            case ITEM_TYPE.HEAL:
+                {
+                    const bodyImg = ImgMgr.getImage(IMAGE_TYPE.ITEM_HEAL);
+                    bodyImg.src = IMAGE_PATH.ITEM_HEAL;
+                    context.drawImage(bodyImg, this.pos.x, this.pos.y, this.scale.x, this.scale.y);
+                    itemName = "HEAL";
+                }
+                break;
+            case ITEM_TYPE.POWER:
+                {
+                    const bodyImg = ImgMgr.getImage(IMAGE_TYPE.ITEM_POWER_UP);
+                    bodyImg.src = IMAGE_PATH.ITEM_POWER_UP;
+                    context.drawImage(bodyImg, this.pos.x, this.pos.y, this.scale.x, this.scale.y);
+                    itemName = "POWER";
+                }
+                break;
+            case ITEM_TYPE.BOMB:
+                {
+                    const bodyImg = ImgMgr.getImage(IMAGE_TYPE.ITEM_BOMB);
+                    bodyImg.src = IMAGE_PATH.ITEM_BOMB;
+                    context.drawImage(bodyImg, this.pos.x, this.pos.y, this.scale.x, this.scale.y);
+                    itemName = "BOMB";
+                }
+                break;
             // 무기 타입
-            case ITEM_TYPE.BULLET: context.fillStyle = "#333333"; itemName = "BULLET"; break;
-            case ITEM_TYPE.BLADE: context.fillStyle = "#D03D3D"; itemName = "BLADE"; break;
-            case ITEM_TYPE.NEEDLE: context.fillStyle = "#7FD449"; itemName = "NEEDLE"; break;
+            case ITEM_TYPE.FIREFOX:
+                {
+                    const bodyImg = ImgMgr.getImage(IMAGE_TYPE.WEAPON_FIREFOX_TYPE);
+                    bodyImg.src = IMAGE_PATH.WEAPON_FIREFOX_TYPE;
+                    context.drawImage(bodyImg, this.pos.x, this.pos.y, this.scale.x, this.scale.y);
+                    itemName = "FIREFOX";
+                }
+                break;
+            case ITEM_TYPE.FLUTTER:
+                {
+                    const bodyImg = ImgMgr.getImage(IMAGE_TYPE.WEAPON_FLUTTER_TYPE);
+                    bodyImg.src = IMAGE_PATH.WEAPON_FLUTTER_TYPE;
+                    context.drawImage(bodyImg, this.pos.x, this.pos.y, this.scale.x, this.scale.y);
+                    itemName = "FLUTTER";
+                }
+                break;
+            case ITEM_TYPE.VUE:
+                {
+                    const bodyImg = ImgMgr.getImage(IMAGE_TYPE.WEAPON_VUE_TYPE);
+                    bodyImg.src = IMAGE_PATH.WEAPON_VUE_TYPE;
+                    context.drawImage(bodyImg, this.pos.x, this.pos.y, this.scale.x, this.scale.y);
+                    itemName = "VUE";
+                }
+                break;
         }
-        context.fillRect(this.pos.x, this.pos.y, this.scale.x, this.scale.y);
-
-        context.fillStyle = "#000000";
-        context.font = "25px Dotum";
-        context.textAlign = "center";
-        context.fillText(itemName, this.pos.x + this.scale.x / 2, this.pos.y + this.scale.y / 2 + 8);
     }
 }
 
@@ -299,7 +395,8 @@ class Timer {
         ++this.sec;
         if (this.sec % 60 === 0) {
             ++this.min;
-            difficulty *= 1.2;
+            difficulty *= 3;
+
             this.sec = 0;
             if (this.min % 60 === 0) {
                 ++this.hour;
@@ -334,6 +431,9 @@ let canvas;
 let context;
 let intervalID;
 
+// Manager
+const ImgMgr = new ImageManager();
+
 // Objects
 let player;
 const statics = [];
@@ -349,7 +449,7 @@ let backImage;
 
 // Others
 let dt;
-let difficulty = 1.0;
+let difficulty = 1;
 let isBomb = false;
 let isReload = false;
 let score = 0;
@@ -357,7 +457,7 @@ let score = 0;
 // Constant, Enum
 const ITEM_PROB = {
     // NONE 확률로 먼저 거른다음
-    // STAT, BULLET 확률로 다시 거르고
+    // STAT, FIREFOX 확률로 다시 거르고
     // 그 안에서는 모두 동일한 확률을 가진다.
     NONE: 0.85, STAT: 0.7, WEAPON: 0.3,
 };
@@ -365,7 +465,7 @@ const ITEM_STAT = {
     HEAL: 0, POWER: 1, BOMB: 2, NONE: 3,
 }
 const ITEM_WEAPON = {
-    BULLET: 0, BLADE: 1, NEEDLE: 2, NONE: 3,
+    FIREFOX: 0, FLUTTER: 1, VUE: 2, NONE: 3,
 }
 const SCORE_TABLE = {
     HEAL: 30, POWER: 50, BOMB: 60,
@@ -375,17 +475,29 @@ const ITEM_TYPE = {
     // Stat Item
     NONE: 0, HEAL: 1, POWER: 2, BOMB: 3,
     // Weapon Item
-    BULLET: 10, BLADE: 11, NEEDLE: 12,
+    FIREFOX: 10, FLUTTER: 11, VUE: 12,
 };
 const WEAPON_TYPE = {
-    BULLET: 0, BLADE: 1, NEEDLE: 2, NONE: 3,
+    FIREFOX: 0, FLUTTER: 1, VUE: 2, NONE: 3,
 };
 const OBJECT_SPEED = {
     PLAYER: 100,
-    BULLET: 130, BLADE: 180, NEEDLE: 130,
-    ENEMY: 80, BOSS: 90,
+    FIREFOX: 8, FLUTTER: 12, VUE: 10,
+    ENEMY: 6, BOSS: 5,
     ITEM: 90,
-}
+};
+const IMAGE_TYPE = {
+    PLAYER_FIREFOX_TYPE: "PLT", PLAYER_FLUTTER_TYPE: "PBT", PLAYER_VUE_TYPE: "PNT",
+    ENEMY: "ENEMY", BOSS: "BOSS",
+    WEAPON_FIREFOX_TYPE: "WB", WEAPON_FLUTTER_TYPE: "WB", WEAPON_VUE_TYPE: "WE",
+    ITEM_HEAL: "HEAL", ITEM_POWER_UP: "POWER", ITEM_BOMB: "BOMB",
+};
+const IMAGE_PATH = {
+    PLAYER_FIREFOX_TYPE: "./Images/gitlab.png", PLAYER_FLUTTER_TYPE: "./Images/code.png", PLAYER_VUE_TYPE: "./Images/swift.png",
+    ENEMY: "./Images/github.png", BOSS: "./Images/android.png",
+    WEAPON_FIREFOX_TYPE: "./Images/firefox.png", WEAPON_FLUTTER_TYPE: "./Images/flutter.png", WEAPON_VUE_TYPE: "./Images/vuejs.png",
+    ITEM_HEAL: "./Images/javascript.png", ITEM_POWER_UP: "./Images/bootstrap.png", ITEM_BOMB: "./Images/typescript.png",
+};
 const DOC_ELEMS = {
     FS: document.getElementById("fs"),
     FPS: document.getElementById("fps"),
@@ -394,7 +506,7 @@ const DOC_ELEMS = {
     IHC: document.getElementById("ihc"),
     IDC: document.getElementById("idc"),
     IBC: document.getElementById("ibc"),
-}
+};
 // Frame
 let prev, now, fps;
 
@@ -412,9 +524,8 @@ function start() {
     canvas = document.getElementById("mainCanvas");
     context = canvas.getContext("2d");
 
-    // 백그라운드 이미지 로딩
-    backImage = new Image();
-    backImage = "images/background.png";
+    // 이미지 캐싱
+    LoadImage();
 
     // 플레이어 생성
     createPlayer();
@@ -425,7 +536,7 @@ function start() {
         function update() {
             now = Date.now();
             fps = Math.round(1000 / (now - prev));
-            dt = (now - prev) / fps;
+            dt = (now - prev);
             prev = now;
 
             if (!isPause) {
@@ -435,9 +546,9 @@ function start() {
                 // 리트라이, 랭킹 등. 작업 처리
                 finalScore = score + timer.getSeconds();
             }
-            mainId = setTimeout(update, 1);
+            mainId = setTimeout(update, 1000 / 60);
         }
-        , 1
+        , 1000 / 60
     );
 
     // Achievement Update
@@ -483,6 +594,53 @@ function AchievementUpdate() {
 //#endregion
 
 //#region Function
+function LoadImage() {
+    // Player Image
+    // 1. Firefox Type
+    const playerFirefoxType = new Image();
+    ImgMgr.cacheImage(IMAGE_TYPE.PLAYER_FIREFOX_TYPE, playerFirefoxType);
+
+    // 2. FLUTTER Type
+    const playerFlutterType = new Image();
+    ImgMgr.cacheImage(IMAGE_TYPE.PLAYER_FLUTTER_TYPE, playerFlutterType);
+
+    // 3. VUE Type
+    const playerVueType = new Image();
+    ImgMgr.cacheImage(IMAGE_TYPE.PLAYER_VUE_TYPE, playerVueType);
+
+    // Enemy Image
+    const EnemyType = new Image();
+    ImgMgr.cacheImage(IMAGE_TYPE.ENEMY, EnemyType);
+
+    // Boss Image
+    const BossType = new Image();
+    ImgMgr.cacheImage(IMAGE_TYPE.BOSS, BossType);
+
+    // Weapon Image
+    // 1. Firefox
+    const WeaponFirefoxType = new Image();
+    ImgMgr.cacheImage(IMAGE_TYPE.WEAPON_FIREFOX_TYPE, WeaponFirefoxType);
+
+    const WeaponFlutterType = new Image();
+    ImgMgr.cacheImage(IMAGE_TYPE.WEAPON_FLUTTER_TYPE, WeaponFlutterType);
+
+    const WeaponVueType = new Image();
+    ImgMgr.cacheImage(IMAGE_TYPE.WEAPON_VUE_TYPE, WeaponVueType);
+
+    // Item Image
+    // 1. HEAL
+    const ItemHeal = new Image();
+    ImgMgr.cacheImage(IMAGE_TYPE.ITEM_HEAL, ItemHeal);
+
+    // 2. POWER UP
+    const ItemPowerUp = new Image();
+    ImgMgr.cacheImage(IMAGE_TYPE.ITEM_POWER_UP, ItemPowerUp);
+
+    // 3. BOMB
+    const ItemBomb = new Image();
+    ImgMgr.cacheImage(IMAGE_TYPE.ITEM_BOMB, ItemBomb);
+}
+
 function pickRandomItem() {
     let resultItemType = ITEM_TYPE.NONE;
     let rand = Math.random();
@@ -500,9 +658,9 @@ function pickRandomItem() {
         } else {
             rand = Math.floor(Math.random() * (ITEM_WEAPON.NONE + 1));
             switch (rand) {
-                case ITEM_WEAPON.BULLET: resultItemType = ITEM_TYPE.BULLET; break;
-                case ITEM_WEAPON.BLADE: resultItemType = ITEM_TYPE.BLADE; break;
-                case ITEM_WEAPON.NEEDLE: resultItemType = ITEM_TYPE.NEEDLE; break;
+                case ITEM_WEAPON.FIREFOX: resultItemType = ITEM_TYPE.FIREFOX; break;
+                case ITEM_WEAPON.FLUTTER: resultItemType = ITEM_TYPE.FLUTTER; break;
+                case ITEM_WEAPON.VUE: resultItemType = ITEM_TYPE.VUE; break;
                 case ITEM_WEAPON.NONE: resultItemType = ITEM_TYPE.NONE; break;
             }
         }
@@ -516,7 +674,15 @@ function pickRandomItem() {
 function createPlayer() {
     const playerScale = new Vector2D(100, 100);
     const playerPos = new Vector2D(canvas.width / 2 - playerScale.x / 2, canvas.height - playerScale.y);
-    player = new Player(playerPos, playerScale, 10, OBJECT_SPEED.PLAYER);
+    const rand = Math.floor(Math.random() * ITEM_WEAPON.NONE + 1);
+    let playerWeapon;
+    switch (rand) {
+        case 0: playerWeapon = WEAPON_TYPE.FIREFOX; break;
+        case 1: playerWeapon = WEAPON_TYPE.FLUTTER; break;
+        case 2: playerWeapon = WEAPON_TYPE.VUE; break;
+        default: playerWeapon = WEAPON_TYPE.FIREFOX; break;
+    }
+    player = new Player(playerPos, playerScale, 10, playerWeapon);
 
     // Control
     document.addEventListener("keydown", (e) => {
@@ -551,12 +717,12 @@ function createPlayer() {
 function fireWeapon() {
     // 기본 약공격
     const weaponScale = new Vector2D(50, 50);
-    const weaponPos = new Vector2D(player.pos.x + weaponScale.x, player.pos.y - weaponScale.y / 2);
+    const weaponPos = new Vector2D(player.pos.x + weaponScale.x / 2, player.pos.y - weaponScale.y / 2);
     let weaponSpeed;
     switch (player.weaponType) {
-        case WEAPON_TYPE.BULLET: weaponSpeed = OBJECT_SPEED.BULLET; break;
-        case WEAPON_TYPE.BLADE: weaponSpeed = OBJECT_SPEED.BLADE; break;
-        case WEAPON_TYPE.NEEDLE: weaponSpeed = OBJECT_SPEED.NEEDLE; break;
+        case WEAPON_TYPE.FIREFOX: weaponSpeed = OBJECT_SPEED.FIREFOX; break;
+        case WEAPON_TYPE.FLUTTER: weaponSpeed = OBJECT_SPEED.FLUTTER; break;
+        case WEAPON_TYPE.VUE: weaponSpeed = OBJECT_SPEED.VUE; break;
     }
     weapons.push(new Weapon(weaponPos, weaponScale, weaponSpeed, player.weaponDamage, player.weaponType));
 }
@@ -568,37 +734,36 @@ async function explodeBomb() {
     const bombPlayerPos = player.pos;
 
     // 무기 타입마다 다른 설정
-    if (bombWeaponType === WEAPON_TYPE.BULLET) {
+    if (bombWeaponType === WEAPON_TYPE.FIREFOX) {
         // 모든 라인에서 총알이 2초간 발사
-        const BULLET_BOMB = setInterval(() => {
+        const FIREFOX_BOMB = setInterval(() => {
             for (let i = 0; i < 5; ++i) {
                 const weaponScale = new Vector2D(50, 50);
-                const weaponPos = new Vector2D((i * 100) + weaponScale.x, canvas.height - weaponScale.y);
-                weapons.push(new Weapon(weaponPos, weaponScale, OBJECT_SPEED.NEEDLE, player.weaponDamage, player.weaponType));
+                const weaponPos = new Vector2D((i * 100) + weaponScale.x / 2, canvas.height - weaponScale.y);
+                weapons.push(new Weapon(weaponPos, weaponScale, OBJECT_SPEED.VUE, player.weaponDamage * 100, player.weaponType));
             }
-        }, 200);
-        setTimeout(() => { clearInterval(BULLET_BOMB); isBomb = false; }, 3000);
-    } else if (bombWeaponType === WEAPON_TYPE.BLADE) {
+        }, 1);
+        setTimeout(() => { clearInterval(FIREFOX_BOMB); isBomb = false; }, 1);
+    } else if (bombWeaponType === WEAPON_TYPE.FLUTTER) {
         // 7초간 빠른 속도로 칼 자동 발사.
-        const BLADE_BOMB = setInterval(() => {
+        const FLUTTER_BOMB = setInterval(() => {
             const weaponScale = new Vector2D(50, 50);
-            const weaponPos = new Vector2D(player.pos.x + weaponScale.x, player.pos.y - weaponScale.y / 2);
-            weapons.push(new Weapon(weaponPos, weaponScale, OBJECT_SPEED.BLADE, player.weaponDamage, player.weaponType));
+            const weaponPos = new Vector2D(player.pos.x + weaponScale.x / 2, player.pos.y - weaponScale.y / 2);
+            weapons.push(new Weapon(weaponPos, weaponScale, OBJECT_SPEED.FLUTTER, player.weaponDamage, player.weaponType));
         }, 100);
-        setTimeout(() => { clearInterval(BLADE_BOMB); isBomb = false; }, 7000);
-    } else if (bombWeaponType === WEAPON_TYPE.NEEDLE) {
-        // 10초간 스킬을 사용한 라인에 니들 터렛을 박아놓는다.
+        setTimeout(() => { clearInterval(FLUTTER_BOMB); isBomb = false; }, 7000);
+    } else if (bombWeaponType === WEAPON_TYPE.VUE) {
+        // 10초간 스킬을 사용한 라인에 터렛을 박아놓는다.
         const turretScale = new Vector2D(50, 50);
         const turretPos = new Vector2D(bombPlayerPos.x + turretScale.x / 2, bombPlayerPos.y + turretScale.y / 2);
         statics.push(new StaticObjects(turretPos, turretScale, "#3E424B"));
-        const NEEDLE_BOMB = setInterval(() => {
+        const VUE_BOMB = setInterval(() => {
             const weaponScale = new Vector2D(50, 50);
-            const weaponPos = new Vector2D(turretPos.x + weaponScale.x / 2, turretPos.y - weaponScale.y / 2);
-            weapons.push(new Weapon(weaponPos, weaponScale, OBJECT_SPEED.NEEDLE, player.weaponDamage, bombWeaponType));
-            console.log("why did not run");
+            const weaponPos = new Vector2D(turretPos.x, turretPos.y - weaponScale.y / 2);
+            weapons.push(new Weapon(weaponPos, weaponScale, OBJECT_SPEED.VUE, player.weaponDamage, bombWeaponType));
         }, 150);
         setTimeout(() => {
-            clearInterval(NEEDLE_BOMB);
+            clearInterval(VUE_BOMB);
             isBomb = false;
             for (let i = 0; i < statics.length; ++i) {
                 if (statics[i].color === "#3E424B") {
@@ -620,7 +785,7 @@ function createEnemy() {
     if (enemyCount === 1) {
         const bossScale = new Vector2D(500, 500);
         const bossPos = new Vector2D(0, -500);
-        const bossHp = Math.floor(Math.random() * 30 * difficulty) + 1;
+        const bossHp = Math.floor(Math.random() * 30 * difficulty) + difficulty;
         bosses.push(new Boss(bossPos, bossScale, bossHp, OBJECT_SPEED.BOSS, 15.0));
         return;
     }
@@ -630,7 +795,7 @@ function createEnemy() {
         const randX = Math.floor(Math.random() * enemyX.length);
         const enemyScale = new Vector2D(100, 100);
         const enemyPos = new Vector2D(enemyX[randX], -100);
-        const enemyHp = Math.floor(Math.random() * 5 * difficulty) + 1;
+        const enemyHp = Math.floor(Math.random() * 5 * difficulty) + difficulty;
         enemys.push(new Enemy(enemyPos, enemyScale, enemyHp, OBJECT_SPEED.ENEMY, 10.0));
         enemyX.splice(randX, 1);
     }
@@ -652,7 +817,7 @@ function progressObject() {
         statics[i].progress();
     }
 
-    // Progress Bullet
+    // Progress Firefox
     for (let i = 0; i < weapons.length;) {
         weapons[i].progress();
         if (weapons[i].isHit) {
@@ -667,10 +832,10 @@ function progressObject() {
         bosses[i].progress();
         if (bosses[i].isDead) {
             if (bosses[i].itemType !== ITEM_TYPE.NONE) {
-                const item = new Item(new Vector2D(200, bosses[i].pos.y <= 0 ? 0 : bosses[i].pos.y), new Vector2D(100, 100), bosses[i].speed, bosses[i].itemType);
+                const item = new Item(new Vector2D(200 + 25, bosses[i].pos.y <= 0 ? 0 : bosses[i].pos.y), new Vector2D(50, 50), bosses[i].speed, bosses[i].itemType);
                 items.push(item);
             }
-            score += bosses[i].score * difficulty;
+            score += bosses[i].score;
             ++killedBossCount;
             bosses.splice(i, 1);
         } else if (!bosses[i].isExist) {
@@ -685,10 +850,10 @@ function progressObject() {
         enemys[i].progress();
         if (enemys[i].isDead) {
             if (enemys[i].itemType !== ITEM_TYPE.NONE) {
-                const item = new Item(new Vector2D(enemys[i].pos.x, enemys[i].pos.y <= 0 ? 0 : enemys[i].pos.y), new Vector2D(100, 100), enemys[i].speed, enemys[i].itemType);
+                const item = new Item(new Vector2D(enemys[i].pos.x + 50 / 2, enemys[i].pos.y <= 0 ? 0 : enemys[i].pos.y), new Vector2D(50, 50), enemys[i].speed, enemys[i].itemType);
                 items.push(item);
             }
-            score += enemys[i].score * difficulty;
+            score += enemys[i].score;
             ++killedEnemyCount;
             enemys.splice(i, 1);
         } else if (!enemys[i].isExist) {
@@ -724,7 +889,7 @@ function collisionAll() {
         }
     }
 
-    // Bullet, Enemy
+    // Firefox, Enemy
     for (let i = 0; i < enemys.length; ++i) {
         for (let j = 0; j < weapons.length; ++j) {
             if (isCollision(enemys[i], weapons[j])
@@ -735,7 +900,7 @@ function collisionAll() {
         }
     }
 
-    // Bullet, Boss
+    // Firefox, Boss
     for (let i = 0; i < bosses.length; ++i) {
         for (let j = 0; j < weapons.length; ++j) {
             if (isCollision(bosses[i], weapons[j])
@@ -800,7 +965,7 @@ function drawObject() {
     for (let i = 0; i < statics.length; ++i) {
         statics[i].draw();
     }
-    // Draw Bullet
+    // Draw Firefox
     for (let i = 0; i < weapons.length; ++i) {
         weapons[i].draw();
     }
@@ -838,13 +1003,13 @@ function drawUI() {
     context.fillStyle = "#000000";
     context.font = "25px Dotum";
     context.textAlign = "end";
-    context.fillText(player.bombs.length, 500, 800);
+    context.fillText(player.bombs.length, canvas.width, canvas.height);
 
     // Draw Magazine
     // context.fillStyle = "#000000";
     // context.font = "25px Dotum";
     // context.textAlign = "end";
-    // context.fillText(curBulletCount, 500, 800);
+    // context.fillText(curFirefoxCount, 500, 800);
 }
 
 function drawGizmo() {

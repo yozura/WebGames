@@ -2,14 +2,27 @@
 <html>
 
 <head>
+    <style>
+        canvas {
+            border: 1px solid #888;
+            -moz-border-radius: 10px;
+            -webkit-border-radius: 10px;
+            border-radius: 10px;
+            -moz-box-shadow: 10px 10px 5px #888;
+            -webkit-box-shadow: 10px 10px 5px #888;
+            box-shadow: 10px 10px 5px #888;
+            background-color: #eee;
+        }
+    </style>
+
     <script async defer src="js/jquery-3.6.0.min.js"></script>
     <script async defer src="js/rec_shoot.js" type="text/javascript"></script>
     <title>슈팅 게임</title>
 </head>
 
 <body onload="start()">
-    <div style="width:510px; height:800px; float:left;">
-        <canvas id="mainCanvas" width="500" height="800">
+    <div style="width:510px; height:700px; float:left;">
+        <canvas id="mainCanvas" width="500" height="700">
         </canvas>
         <div id="fps">FPS 0</div>
     </div>
